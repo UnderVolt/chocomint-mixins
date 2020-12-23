@@ -20,7 +20,6 @@ import io.undervolt.gui.notifications.NotificationOverlay;
 import io.undervolt.gui.user.User;
 import io.undervolt.gui.user.UserManager;
 import io.undervolt.mod.ModLoader;
-import io.undervolt.mod.Test;
 import io.undervolt.utils.RestUtils;
 import io.undervolt.utils.config.Config;
 import io.undervolt.utils.config.ConfigurableManager;
@@ -120,7 +119,6 @@ public class Chocomint implements Listener {
                 this.getEventManager().registerEvents(this.configurableManager);
                 this.background = new Background(this);
                 this.configurableManager.register(this.background);
-                this.configurableManager.register(new Test());
                 this.modLoader.load(new File(this.rootPath + File.separator + "mods"));
 
                 this.configurableManager.configurableList.forEach(configurable -> System.out.println("Registered configurable: " + configurable.getName()));
