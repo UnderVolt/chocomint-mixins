@@ -3,15 +3,19 @@ version '0.0.1-alpha'
 
 buildscript {
     repositories {
-        maven {
-            name = 'forge'
-            url = 'http://files.minecraftforge.net/maven'
-        }
-        maven {
-            name = 'SpongePowered'
-            url = 'http://repo.spongepowered.org/maven'
-        }
+        mavenCentral()
         jcenter()
+        maven {
+            name = "forge"
+            url = "https://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = 'sponge'
+            url = 'https://repo.spongepowered.org/maven'
+        }
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
 
     dependencies {
@@ -20,21 +24,20 @@ buildscript {
     }
 }
 
-apply plugin: 'idea'
+configurations {
+    embed
+    compile.extendsFrom(embed)
+}
+
 apply plugin: 'java'
 apply plugin: 'net.minecraftforge.gradle.tweaker-client'
 apply plugin: 'org.spongepowered.mixin'
 
 sourceCompatibility = targetCompatibility = '1.8'
+
 compileJava {
     sourceCompatibility = targetCompatibility = '1.8'
-    options.encoding = "UTF-8" // allow emoji in comments :^)
-}
-
-sourceSets {
-    launch {
-        compileClasspath += main.compileClasspath + main.runtimeClasspath + main.output
-    }
+    options.encoding = "UTF-8"
 }
 
 minecraft {
@@ -42,41 +45,46 @@ minecraft {
     mappings = 'stable_22'
     tweakClass = 'io.undervolt.launch.ChocomintTweaker'
     runDir = 'run'
-
-    // The sources jar should use SRG names not MCP to ensure compatibility with all mappings
-    makeObfSourceJar = true
+    clientJvmArgs = ["-XX:-DisableExplicitGC"]
+    makeObfSourceJar = false
 }
 
 repositories {
+    maven {
+        name = 'sponge'
+        url = 'https://repo.spongepowered.org/maven/'
+    }
     mavenCentral()
+    jcenter()
+}
 
-    maven {
-        name = 'spongepowered-repo'
-        url = 'http://repo.spongepowered.org/maven/'
-    }
-
-    maven {
-        name = 'impactdevelopment-repo'
-        url = 'https://impactdevelopment.github.io/maven/'
-    }
+configurations {
+    extraLibs
 }
 
 dependencies {
-    compile 'org.spongepowered:mixin:0.6.6-SNAPSHOT'
-    compile 'com.github.ImpactDevelopment:SimpleTweaker:1.2'
-    runtime launchImplementation('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
+    embed('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'
         exclude module: 'gson'
         exclude module: 'commons-io'
-        exclude module: 'log4j-core'
     }
     testImplementation 'junit:junit:4.12'
+    embed('io.socket:socket.io-client:1.0.0')
 }
 
 mixin {
-    defaultObfuscationEnv searge
-    add sourceSets.launch, 'mixins.chocomint.refmap.json'
+    defaultObfuscationEnv notch
+    add sourceSets.main, 'mixins.chocomint.refmap.json'
+}
+
+processResources {
+    inputs.files "src/main/resources"
+    outputs.dir "build/classes/main"
+    copy {
+        from("src/main/resources")
+        into("build/classes/main")
+    }
 }
 
 javadoc {
@@ -88,22 +96,33 @@ javadoc {
 }
 
 jar {
-    from sourceSets.launch.output, sourceSets.api.output
-
-    if (!getProject().hasProperty("baritone.forge_build")) {
-        exclude "**/BaritoneForgeModXD.class"
-        exclude "**/mods.toml"
+    dependsOn configurations.compile
+    from {
+        configurations.embed.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
     }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+}
 
-    preserveFileTimestamps = false
-    reproducibleFileOrder = true
-
+jar {
     manifest {
         attributes(
-                'MixinConfigs': 'mixins.chocomint.json',
-
-                'Implementation-Title': 'Chocomint',
-                'Implementation-Version': version
+            'MixinConfigs': 'mixins.chocomint.json',
+            'TweakClass': 'io.undervolt.launch.ChocomintTweaker',
+            'TweakOrder': 0,
+            'Implementation-Title': 'Chocomint',
+            'Implementation-Version': version
         )
     }
+    configurations.embed.each { dep ->
+        from(project.zipTree(dep)) {
+            exclude 'META-INF', 'META-INF/**'
+            exclude 'org/jetbrains/annotations', 'org/jetbrains/annotations/**'
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.10.3'
 }

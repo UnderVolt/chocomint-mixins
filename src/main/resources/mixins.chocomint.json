@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "compatibilityLevel": "JAVA_8",
+    "package": "io.undervolt.mixins",
+    "refmap": "mixins.chocomint.refmap.json",
+    "verbose": true,
+    "mixins": [
+      "gui.MixinGuiIngameMenu",
+      "gui.MixinGuiMainMenu",
+      "gui.MixinGuiIngame",
+      "client.MixinMinecraft"
+    ]
+  }
