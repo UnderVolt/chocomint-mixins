@@ -1,5 +1,6 @@
 package io.undervolt.mixins.gui;
 
+import io.undervolt.bridge.GameBridge;
 import io.undervolt.gui.GameBar;
 import io.undervolt.gui.GameBarButton;
 import io.undervolt.gui.chat.AvailableRooms;
@@ -21,13 +22,10 @@ import java.io.IOException;
 @Mixin(GuiMainMenu.class)
 public abstract class MixinGuiMainMenu extends GuiScreen {
 
-    @Shadow private String splashText;
-
     /** Chat button */
     private GameBarButton chatButton;
     private GameBar bar;
 
-    boolean drawPanorama = false;
     boolean alreadyExecuted = false;
 
     @Inject(method = "initGui", at = @At("RETURN") )
@@ -45,8 +43,8 @@ public abstract class MixinGuiMainMenu extends GuiScreen {
     }
 
     @Inject(method = "renderSkybox", at = @At("HEAD"), cancellable = true)
-    private void drawSkybox(int a, int b, float c, CallbackInfo info) {
-        if(!this.drawPanorama) {
+    private void drawSkybox(int a, int b, float c, CallbackInfo info) throws IOException {
+        if(GameBridge.getChocomint().getBackground().getBackground() != null) {
             this.drawDefaultBackground();
             info.cancel();
         }
@@ -61,7 +59,6 @@ public abstract class MixinGuiMainMenu extends GuiScreen {
 
     @Inject(method = "drawScreen", at = @At("RETURN"))
     private void draw(int mouseX, int mouseY, float partialTicks, CallbackInfo info) {
-        this.splashText = "Fuck U, Peko!";
         this.bar.draw(mouseX, mouseY, partialTicks, this.width, this.height);
     }
 
@@ -93,10 +90,6 @@ public abstract class MixinGuiMainMenu extends GuiScreen {
                 break;
             case Keyboard.KEY_F10:
                 this.mc.displayGuiScreen(new UserSearch(this ));
-                break;
-            case Keyboard.KEY_F7:
-                this.drawPanorama = !this.drawPanorama;
-                System.out.println(this.drawPanorama);
                 break;
         }
     }
