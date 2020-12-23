@@ -25,6 +25,10 @@ public abstract class MixinGuiButton extends Gui {
     @Shadow protected abstract int getHoverState(boolean mouseOver);
     @Shadow protected abstract void mouseDragged(Minecraft mc, int mouseX, int mouseY);
 
+    /**
+     * @author Gerardo Wacker
+     * @reason Custom buttons
+     */
     @Overwrite
     public void drawButton(Minecraft mc, int mouseX, int mouseY) {
         if (this.visible) {
